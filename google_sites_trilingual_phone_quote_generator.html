@@ -1,0 +1,871 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>冠科通訊｜中英越三語手機報價單一鍵生成器</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;500;700;900&family=Plus+Jakarta+Sans:wght@500;600;700;800&display=swap');
+    body {
+      font-family: 'Plus Jakarta Sans', 'Noto Sans TC', -apple-system, BlinkMacSystemFont, sans-serif;
+      background-color: #f1f5f9;
+    }
+    .quote-card-gradient {
+      background: linear-gradient(145deg, #0f172a 0%, #1e293b 55%, #0f172a 100%);
+    }
+    .gold-badge {
+      background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%);
+    }
+    .glass-panel {
+      background: rgba(255, 255, 255, 0.06);
+      border: 1px solid rgba(255, 255, 255, 0.12);
+    }
+  </style>
+</head>
+<body class="text-slate-800 min-h-screen pb-12">
+
+  <!-- Top Action Bar -->
+  <header class="sticky top-0 z-40 bg-slate-900 text-white shadow-lg border-b border-slate-700">
+    <div class="max-w-7xl mx-auto px-4 py-3 flex flex-wrap items-center justify-between gap-3">
+      <div class="flex items-center gap-2.5">
+        <span class="inline-flex items-center justify-center w-9 h-9 rounded-xl bg-amber-500 text-slate-950 font-black text-lg shadow">📱</span>
+        <div>
+          <h1 class="font-bold text-base sm:text-lg leading-tight">手機報價單一鍵生成器 <span class="text-xs font-normal text-amber-400 ml-1">中 / 英 / 越 三語版</span></h1>
+          <p class="text-[11px] text-slate-400">2~7期分期試算・106款市售機型・一鍵出圖與純文字複製</p>
+        </div>
+      </div>
+
+      <div class="flex flex-wrap items-center gap-2">
+        <button id="syncScrollBtn" type="button" class="px-3 py-2 rounded-lg bg-slate-700 hover:bg-slate-600 text-white text-xs sm:text-sm font-semibold transition">
+          🔄 立即同步預覽
+        </button>
+        <button id="downloadPngBtn" type="button" class="px-3.5 py-2 rounded-lg bg-amber-500 hover:bg-amber-400 text-slate-950 text-xs sm:text-sm font-extrabold flex items-center gap-1.5 shadow transition">
+          <span>🖼️</span><span>下載 PNG 報價圖</span>
+        </button>
+        <button id="copyTextBtn" type="button" class="px-3.5 py-2 rounded-lg bg-emerald-600 hover:bg-emerald-500 text-white text-xs sm:text-sm font-bold flex items-center gap-1.5 shadow transition">
+          <span>📋</span><span>複製三語純文字</span>
+        </button>
+      </div>
+    </div>
+  </header>
+
+  <!-- Main Workspace -->
+  <main class="max-w-7xl mx-auto px-4 pt-6 grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
+
+    <!-- Left Controls (7 cols) -->
+    <section class="lg:col-span-7 space-y-5">
+
+      <!-- 1. Device Selection (Brand -> Model -> Spec -> Color) -->
+      <div class="bg-white rounded-2xl p-5 shadow-sm border border-slate-200">
+        <div class="flex flex-wrap items-center justify-between gap-2 mb-4">
+          <div class="flex items-center gap-2">
+            <span class="w-6 h-6 rounded-full bg-slate-900 text-white text-xs font-bold flex items-center justify-center">1</span>
+            <h2 class="font-extrabold text-slate-900 text-base">選擇手機機型（品牌 ➔ 型號 ➔ 規格 ➔ 顏色）</h2>
+          </div>
+          <label class="inline-flex items-center gap-1.5 text-xs font-bold text-indigo-600 cursor-pointer select-none">
+            <input id="customModeToggle" type="checkbox" class="rounded text-indigo-600 focus:ring-indigo-500" />
+            <span>✍️ 自訂手動輸入機型</span>
+          </label>
+        </div>
+
+        <!-- Quick Search -->
+        <div id="catalogModeBox" class="space-y-3.5">
+          <div>
+            <label class="block text-xs font-bold text-slate-500 mb-1">🔍 快速搜尋型號（輸入關鍵字自動篩選，例如：18 Pro、S26、X9、V70）</label>
+            <input id="quickSearchInput" type="text" placeholder="輸入型號關鍵字..." class="w-full px-3.5 py-2 rounded-xl border border-slate-300 text-sm focus:outline-none focus:ring-2 focus:ring-amber-500" />
+          </div>
+
+          <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+            <div>
+              <label class="block text-xs font-bold text-slate-600 mb-1">① 品牌 (Brand)</label>
+              <select id="brandSelect" class="w-full px-3 py-2.5 rounded-xl border border-slate-300 bg-slate-50 text-sm font-semibold focus:outline-none focus:ring-2 focus:ring-amber-500"></select>
+            </div>
+            <div>
+              <label class="block text-xs font-bold text-slate-600 mb-1">② 型號 (Model)</label>
+              <select id="modelSelect" class="w-full px-3 py-2.5 rounded-xl border border-slate-300 bg-slate-50 text-sm font-semibold focus:outline-none focus:ring-2 focus:ring-amber-500"></select>
+            </div>
+            <div>
+              <label class="block text-xs font-bold text-slate-600 mb-1">③ 規格容量 (Spec)</label>
+              <select id="specSelect" class="w-full px-3 py-2.5 rounded-xl border border-slate-300 bg-slate-50 text-sm font-semibold focus:outline-none focus:ring-2 focus:ring-amber-500"></select>
+            </div>
+            <div>
+              <label class="block text-xs font-bold text-slate-600 mb-1">④ 顏色 (Color 中/英/越)</label>
+              <select id="colorSelect" class="w-full px-3 py-2.5 rounded-xl border border-slate-300 bg-slate-50 text-sm font-semibold focus:outline-none focus:ring-2 focus:ring-amber-500"></select>
+            </div>
+          </div>
+        </div>
+
+        <!-- Custom Manual Input -->
+        <div id="customModeBox" class="hidden grid grid-cols-1 sm:grid-cols-2 gap-3 pt-1">
+          <div>
+            <label class="block text-xs font-bold text-slate-600 mb-1">品牌名稱</label>
+            <input id="customBrandInput" type="text" value="Apple" class="w-full px-3 py-2 rounded-xl border border-slate-300 text-sm" />
+          </div>
+          <div>
+            <label class="block text-xs font-bold text-slate-600 mb-1">手機型號</label>
+            <input id="customModelInput" type="text" value="iPhone 18 Pro Max" class="w-full px-3 py-2 rounded-xl border border-slate-300 text-sm" />
+          </div>
+          <div>
+            <label class="block text-xs font-bold text-slate-600 mb-1">規格容量</label>
+            <input id="customSpecInput" type="text" value="256G" class="w-full px-3 py-2 rounded-xl border border-slate-300 text-sm" />
+          </div>
+          <div>
+            <label class="block text-xs font-bold text-slate-600 mb-1">顏色（中文 / 英文 / 越文）</label>
+            <input id="customColorInput" type="text" value="勃根地紅 / Burgundy Red / Đỏ Burgundy" class="w-full px-3 py-2 rounded-xl border border-slate-300 text-sm" />
+          </div>
+        </div>
+
+        <!-- Condition Tag -->
+        <div class="mt-3.5 pt-3.5 border-t border-slate-100 grid grid-cols-1 sm:grid-cols-2 gap-3">
+          <div>
+            <label class="block text-xs font-bold text-slate-600 mb-1">機況版本標示</label>
+            <select id="conditionSelect" class="w-full px-3 py-2 rounded-xl border border-slate-300 text-sm font-medium">
+              <option value="tw_new">台灣公司貨・全新未拆封 (TW Official Brand New)</option>
+              <option value="global_new">原廠全新未拆封・全球保固 (Brand New Sealed)</option>
+              <option value="like_new">嚴選福利機・近全新保固 (Certified Like-New)</option>
+            </select>
+          </div>
+          <div>
+            <label class="block text-xs font-bold text-slate-600 mb-1">交機與付款方式</label>
+            <select id="deliverySelect" class="w-full px-3 py-2 rounded-xl border border-slate-300 text-sm font-medium">
+              <option value="cod_mail">全台郵寄貨到付款・免運費 (Mail COD Free Shipping)</option>
+              <option value="store_pickup">門市現場驗機交機 (In-Store Pickup)</option>
+              <option value="express_cod">宅配貨到付款・快速出貨 (Express Delivery COD)</option>
+            </select>
+          </div>
+        </div>
+      </div>
+
+      <!-- 2. Price & 2~7 Installment Settings -->
+      <div class="bg-white rounded-2xl p-5 shadow-sm border border-slate-200">
+        <div class="flex flex-wrap items-center justify-between gap-2 mb-4">
+          <div class="flex items-center gap-2">
+            <span class="w-6 h-6 rounded-full bg-slate-900 text-white text-xs font-bold flex items-center justify-center">2</span>
+            <h2 class="font-extrabold text-slate-900 text-base">價格與 2~7 期分期試算</h2>
+          </div>
+          <span id="discountBadgeAdmin" class="text-xs font-bold px-2.5 py-1 rounded-full bg-rose-50 text-rose-600 border border-rose-200">現省 $0</span>
+        </div>
+
+        <div class="grid grid-cols-1 sm:grid-cols-3 gap-3 mb-4">
+          <div>
+            <label class="block text-xs font-bold text-slate-600 mb-1">空機基準價（附件F排出售價）</label>
+            <input id="basePriceInput" type="number" step="100" value="49500" class="w-full px-3 py-2.5 rounded-xl border border-slate-300 text-base font-extrabold text-slate-900 focus:ring-2 focus:ring-amber-500" />
+          </div>
+          <div>
+            <label class="block text-xs font-bold text-slate-600 mb-1">原廠建議售價（附件E排原價）</label>
+            <input id="msrpPriceInput" type="number" step="100" value="49900" class="w-full px-3 py-2.5 rounded-xl border border-slate-300 text-base font-bold text-slate-600 focus:ring-2 focus:ring-amber-500" />
+          </div>
+          <div>
+            <label class="block text-xs font-bold text-slate-600 mb-1">頭期款金額 (Down Payment)</label>
+            <input id="downPaymentInput" type="number" step="500" value="0" class="w-full px-3 py-2.5 rounded-xl border border-slate-300 text-base font-extrabold text-emerald-700 focus:ring-2 focus:ring-amber-500" />
+          </div>
+        </div>
+
+        <!-- Display toggles -->
+        <div class="flex flex-wrap items-center gap-4 mb-4 p-3 rounded-xl bg-slate-50 border border-slate-200 text-xs font-bold text-slate-700">
+          <label class="inline-flex items-center gap-1.5 cursor-pointer">
+            <input id="showBasePriceToggle" type="checkbox" class="rounded text-amber-600" />
+            <span>顯示空機出售價</span>
+          </label>
+          <label class="inline-flex items-center gap-1.5 cursor-pointer">
+            <input id="showMsrpToggle" type="checkbox" checked class="rounded text-amber-600" />
+            <span>顯示原廠建議售價與現省金額</span>
+          </label>
+          <label class="inline-flex items-center gap-1.5 cursor-pointer">
+            <input id="showCompareGridToggle" type="checkbox" checked class="rounded text-amber-600" />
+            <span>顯示多期數比較表 (2~7期)</span>
+          </label>
+        </div>
+
+        <!-- Featured Term & Multi-term checkboxes -->
+        <div class="grid grid-cols-1 sm:grid-cols-12 gap-3 items-center mb-3">
+          <div class="sm:col-span-4">
+            <label class="block text-xs font-bold text-slate-600 mb-1">⭐ 主打推薦期數 (2~7期)</label>
+            <select id="featuredTermSelect" class="w-full px-3 py-2 rounded-xl border border-amber-400 bg-amber-50 text-sm font-extrabold text-amber-900">
+              <option value="2">2 期 (2 Months)</option>
+              <option value="3">3 期 (3 Months)</option>
+              <option value="4">4 期 (4 Months)</option>
+              <option value="5">5 期 (5 Months)</option>
+              <option value="6" selected>6 期 (6 Months)</option>
+              <option value="7">7 期 (7 Months)</option>
+            </select>
+          </div>
+          <div class="sm:col-span-8">
+            <div class="flex items-center justify-between mb-1">
+              <label class="text-xs font-bold text-slate-600">比較表勾選期數（限 2~7 期）</label>
+              <button id="selectAllTermsBtn" type="button" class="text-[11px] font-bold text-indigo-600 hover:underline">全選 2~7 期</button>
+            </div>
+            <div class="flex flex-wrap gap-2" id="termCheckboxes">
+              <label class="px-2.5 py-1.5 rounded-lg border border-slate-300 bg-white text-xs font-bold cursor-pointer flex items-center gap-1"><input type="checkbox" value="2" class="term-cb" checked /> 2期</label>
+              <label class="px-2.5 py-1.5 rounded-lg border border-slate-300 bg-white text-xs font-bold cursor-pointer flex items-center gap-1"><input type="checkbox" value="3" class="term-cb" checked /> 3期</label>
+              <label class="px-2.5 py-1.5 rounded-lg border border-slate-300 bg-white text-xs font-bold cursor-pointer flex items-center gap-1"><input type="checkbox" value="4" class="term-cb" checked /> 4期</label>
+              <label class="px-2.5 py-1.5 rounded-lg border border-slate-300 bg-white text-xs font-bold cursor-pointer flex items-center gap-1"><input type="checkbox" value="5" class="term-cb" checked /> 5期</label>
+              <label class="px-2.5 py-1.5 rounded-lg border border-slate-300 bg-white text-xs font-bold cursor-pointer flex items-center gap-1"><input type="checkbox" value="6" class="term-cb" checked /> 6期</label>
+              <label class="px-2.5 py-1.5 rounded-lg border border-slate-300 bg-white text-xs font-bold cursor-pointer flex items-center gap-1"><input type="checkbox" value="7" class="term-cb" checked /> 7期</label>
+            </div>
+          </div>
+        </div>
+
+        <!-- Advanced Multiplier Settings -->
+        <details class="mt-3 rounded-xl border border-slate-200 bg-slate-50 p-3">
+          <summary class="text-xs font-extrabold text-slate-700 cursor-pointer select-none flex items-center justify-between">
+            <span>⚙️ 進階設定：2~7 期分期係數與聯絡帳號（點擊展開）</span>
+          </summary>
+          <div class="mt-3 pt-3 border-t border-slate-200 space-y-3">
+            <div class="grid grid-cols-3 sm:grid-cols-6 gap-2">
+              <div>
+                <label class="block text-[11px] font-bold text-slate-500">2期係數</label>
+                <input id="rate2" type="number" step="0.005" value="1.05" class="rate-input w-full px-2 py-1.5 rounded-lg border border-slate-300 text-xs font-bold" />
+              </div>
+              <div>
+                <label class="block text-[11px] font-bold text-slate-500">3期係數</label>
+                <input id="rate3" type="number" step="0.005" value="1.075" class="rate-input w-full px-2 py-1.5 rounded-lg border border-slate-300 text-xs font-bold" />
+              </div>
+              <div>
+                <label class="block text-[11px] font-bold text-slate-500">4期係數</label>
+                <input id="rate4" type="number" step="0.005" value="1.10" class="rate-input w-full px-2 py-1.5 rounded-lg border border-slate-300 text-xs font-bold" />
+              </div>
+              <div>
+                <label class="block text-[11px] font-bold text-slate-500">5期係數</label>
+                <input id="rate5" type="number" step="0.005" value="1.25" class="rate-input w-full px-2 py-1.5 rounded-lg border border-slate-300 text-xs font-bold" />
+              </div>
+              <div>
+                <label class="block text-[11px] font-bold text-slate-500">6期係數</label>
+                <input id="rate6" type="number" step="0.005" value="1.14" class="rate-input w-full px-2 py-1.5 rounded-lg border border-slate-300 text-xs font-bold" />
+              </div>
+              <div>
+                <label class="block text-[11px] font-bold text-slate-500">7期係數</label>
+                <input id="rate7" type="number" step="0.005" value="1.16" class="rate-input w-full px-2 py-1.5 rounded-lg border border-slate-300 text-xs font-bold" />
+              </div>
+            </div>
+
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+              <div>
+                <label class="block text-[11px] font-bold text-slate-600 mb-1">商店名稱 / 標題</label>
+                <input id="shopNameInput" type="text" value="冠科通訊 GUAN KE MOBILE" class="w-full px-2.5 py-1.5 rounded-lg border border-slate-300 text-xs font-bold" />
+              </div>
+              <div>
+                <label class="block text-[11px] font-bold text-slate-600 mb-1">聯絡帳號（固定預設）</label>
+                <input id="contactAccountInput" type="text" value="Messenger : Terry Chen Pega" class="w-full px-2.5 py-1.5 rounded-lg border border-slate-300 text-xs font-bold text-indigo-700" />
+              </div>
+            </div>
+
+            <div class="flex justify-end">
+              <button id="resetDefaultsBtn" type="button" class="text-xs font-bold text-rose-600 hover:underline">↺ 重設為預設係數與帳號</button>
+            </div>
+          </div>
+        </details>
+      </div>
+
+      <!-- 3. Freebies Stacker -->
+      <div class="bg-white rounded-2xl p-5 shadow-sm border border-slate-200">
+        <div class="flex items-center justify-between mb-3">
+          <div class="flex items-center gap-2">
+            <span class="w-6 h-6 rounded-full bg-slate-900 text-white text-xs font-bold flex items-center justify-center">3</span>
+            <h2 class="font-extrabold text-slate-900 text-base">交機超值贈品組合（中 / 英 / 越）</h2>
+          </div>
+          <span id="freebieTotalBadge" class="text-xs font-extrabold px-2.5 py-1 rounded-full bg-amber-100 text-amber-800">總價值 $3,440</span>
+        </div>
+
+        <div id="freebiesList" class="space-y-2 mb-3"></div>
+
+        <!-- Add Custom Freebie -->
+        <div class="pt-3 border-t border-slate-100 grid grid-cols-1 sm:grid-cols-12 gap-2">
+          <input id="newFreebieZh" type="text" placeholder="中文贈品名（例：快充頭）" class="sm:col-span-4 px-2.5 py-1.5 rounded-lg border border-slate-300 text-xs" />
+          <input id="newFreebieEn" type="text" placeholder="English Name" class="sm:col-span-3 px-2.5 py-1.5 rounded-lg border border-slate-300 text-xs" />
+          <input id="newFreebieVi" type="text" placeholder="Tên tiếng Việt" class="sm:col-span-3 px-2.5 py-1.5 rounded-lg border border-slate-300 text-xs" />
+          <div class="sm:col-span-2 flex gap-1">
+            <input id="newFreebieVal" type="number" placeholder="價值" value="490" class="w-full px-2 py-1.5 rounded-lg border border-slate-300 text-xs" />
+            <button id="addFreebieBtn" type="button" class="px-2.5 py-1.5 rounded-lg bg-slate-900 text-white text-xs font-bold hover:bg-slate-700">+</button>
+          </div>
+        </div>
+      </div>
+
+    </section>
+
+    <!-- Right Preview Card (5 cols) -->
+    <section id="previewSection" class="lg:col-span-5 space-y-3">
+      <div class="flex items-center justify-between px-1">
+        <span class="text-xs font-extrabold text-slate-600 uppercase tracking-wider">👁️ 客戶報價單即時預覽 (Live Trilingual Card)</span>
+        <span id="syncIndicator" class="text-[11px] font-bold text-emerald-600">● 已即時同步</span>
+      </div>
+
+      <!-- Exportable Card Container -->
+      <div id="quoteCardCapture" class="quote-card-gradient text-white rounded-3xl p-6 shadow-2xl border border-slate-700/80 relative overflow-hidden">
+        <!-- Decorative glow -->
+        <div class="absolute -top-24 -right-24 w-56 h-56 rounded-full bg-amber-500/15 blur-2xl pointer-events-none"></div>
+        <div class="absolute -bottom-24 -left-24 w-56 h-56 rounded-full bg-indigo-500/15 blur-2xl pointer-events-none"></div>
+
+        <!-- Card Header -->
+        <div class="flex items-start justify-between gap-2 pb-4 border-b border-white/10 relative z-10">
+          <div>
+            <div class="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full gold-badge text-slate-950 text-[10px] font-black tracking-wide uppercase mb-1.5">
+              <span>★ VIP 專屬報價單 / QUOTE / BÁO GIÁ</span>
+            </div>
+            <h3 id="cardShopName" class="text-lg font-black tracking-tight text-white">冠科通訊 GUAN KE MOBILE</h3>
+          </div>
+          <div class="text-right text-[11px] text-slate-300">
+            <div class="font-bold text-amber-400">📅 <span id="cardDate">2026/11/25</span></div>
+            <div class="text-[10px] text-slate-400">當日盤價有效 Valid Today</div>
+          </div>
+        </div>
+
+        <!-- Product Info Block -->
+        <div class="py-4 border-b border-white/10 relative z-10">
+          <div class="text-xs font-bold text-amber-400 tracking-wider uppercase" id="cardBrand">APPLE</div>
+          <div class="text-2xl sm:text-[26px] font-black text-white leading-tight mt-0.5" id="cardModel">iPhone 18 Pro Max</div>
+
+          <div class="flex flex-wrap items-center gap-2 mt-2.5">
+            <span id="cardSpec" class="px-3 py-1 rounded-lg bg-white/15 text-white text-xs font-extrabold tracking-wide">256G</span>
+            <span class="inline-flex items-center gap-1.5 px-3 py-1 rounded-lg bg-white/10 text-slate-100 text-xs font-bold">
+              <span id="cardColorDot" class="w-3 h-3 rounded-full border border-white/60 inline-block" style="background-color:#6B242B;"></span>
+              <span id="cardColorText">勃根地紅 / Burgundy Red / Đỏ Burgundy</span>
+            </span>
+          </div>
+
+          <div class="mt-2.5 text-[11px] text-slate-300 flex items-center gap-1.5" id="cardConditionText">
+            <span>✅</span><span>台灣公司貨・全新未拆封 (TW Official Brand New)</span>
+          </div>
+
+          <!-- Optional MSRP & Base Price Row -->
+          <div id="cardPriceCompareRow" class="mt-3 pt-2.5 border-t border-white/10 flex flex-wrap items-center justify-between gap-2 text-xs">
+            <div id="cardMsrpBox" class="text-slate-300">
+              <span class="text-slate-400">原廠建議價 MSRP:</span>
+              <span id="cardMsrpVal" class="line-through text-slate-400 font-semibold ml-1">$49,900</span>
+              <span id="cardSaveTag" class="ml-1.5 px-2 py-0.5 rounded bg-rose-500/25 text-rose-300 font-extrabold text-[11px]">現省 Save $400</span>
+            </div>
+            <div id="cardBasePriceBox" class="hidden font-bold text-amber-300">
+              空機價 Cash: <span id="cardBasePriceVal">$49,500</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Hero Installment Box -->
+        <div class="my-4 p-4 rounded-2xl bg-gradient-to-br from-amber-500/20 via-amber-500/10 to-slate-900/60 border border-amber-400/40 relative z-10">
+          <div class="grid grid-cols-2 gap-3 items-center">
+            <div class="border-r border-white/15 pr-3">
+              <div class="text-[11px] font-bold text-slate-300">頭期款・Down・Trả trước</div>
+              <div id="cardDownPayment" class="text-2xl sm:text-3xl font-black text-emerald-400 mt-0.5">$0</div>
+              <div class="text-[10px] text-slate-300 mt-0.5">輕鬆取機 Zero Hassle</div>
+            </div>
+            <div class="pl-1">
+              <div class="text-[11px] font-bold text-amber-300">
+                <span id="cardFeaturedTermLabel">6期月付</span>・Monthly・Góp/tháng
+              </div>
+              <div id="cardFeaturedMonthly" class="text-2xl sm:text-3xl font-black text-amber-400 mt-0.5">$9,405</div>
+              <div class="text-[10px] text-slate-300 mt-0.5">含分期手續費 All-inclusive</div>
+            </div>
+          </div>
+        </div>
+
+        <!-- 2~7 Installment Comparison Table -->
+        <div id="cardCompareSection" class="mb-4 relative z-10">
+          <div class="text-[11px] font-extrabold text-slate-300 mb-2 flex items-center justify-between">
+            <span>📊 分期方案試算表 / Installment Plans / Bảng trả góp (2~7期)</span>
+          </div>
+          <div id="cardCompareGrid" class="grid grid-cols-3 gap-2"></div>
+        </div>
+
+        <!-- Freebies Section -->
+        <div class="mb-4 p-3.5 rounded-2xl glass-panel relative z-10">
+          <div class="flex items-center justify-between mb-2">
+            <span class="text-xs font-extrabold text-amber-300">🎁 購機專屬好禮 / Free Gifts / Quà tặng</span>
+            <span id="cardFreebieTotal" class="text-[11px] font-black text-amber-400">總價值 Value $3,440</span>
+          </div>
+          <ul id="cardFreebiesList" class="space-y-1.5 text-[11px] text-slate-200"></ul>
+        </div>
+
+        <!-- 3-Step Delivery & Guarantee -->
+        <div class="mb-4 p-3 rounded-2xl bg-slate-950/50 border border-white/10 text-[11px] space-y-1.5 relative z-10">
+          <div class="font-extrabold text-emerald-400 flex items-center gap-1.5">
+            <span>🚚</span><span id="cardDeliveryText">全台郵寄貨到付款・免運費 (Mail COD Free Shipping)</span>
+          </div>
+          <div class="text-slate-300 leading-relaxed">
+            ① 線上快速審核 ➔ ② 數位合約簽署 ➔ ③ 郵寄貨到付款取機<br/>
+            <span class="text-slate-400 text-[10px]">1. Fast Review ➔ 2. E-Contract ➔ 3. Mail COD | 1. Duyệt nhanh ➔ 2. Ký HĐ điện tử ➔ 3. Nhận máy COD</span>
+          </div>
+        </div>
+
+        <!-- Contact Footer -->
+        <div class="pt-3 border-t border-white/15 flex flex-wrap items-center justify-between gap-2 relative z-10">
+          <div>
+            <div class="text-[10px] text-slate-400">立即私訊下單 / Order Now / Đặt hàng ngay</div>
+            <div id="cardContactAccount" class="text-sm font-black text-amber-400 tracking-wide">Messenger : Terry Chen Pega</div>
+          </div>
+          <div class="text-[10px] text-slate-400 text-right">
+            報價有效至今日 23:59<br/>Valid until 23:59 today
+          </div>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <script>
+    const PHONE_CATALOG = {"Apple": {"iPhone 17": {"specs": [{"spec": "256G", "price": 31500, "msrp": 32900, "unit_price": 30490}], "colors": [{"zh": "薰衣草紫", "en": "Lavender", "vi": "Tím Oải Hương", "hex": "#C9B8DB"}, {"zh": "鼠尾草綠", "en": "Sage Green", "vi": "Xanh Xô Thơm", "hex": "#A3B49E"}, {"zh": "霧藍", "en": "Mist Blue", "vi": "Xanh Sương Mù", "hex": "#9EB6C8"}, {"zh": "白色", "en": "White", "vi": "Trắng", "hex": "#F5F5F7"}, {"zh": "黑色", "en": "Black", "vi": "Đen", "hex": "#252629"}]}, "iPhone Air": {"specs": [{"spec": "1TB", "price": 58500, "msrp": 61900, "unit_price": 57490}], "colors": [{"zh": "天藍", "en": "Sky Blue", "vi": "Xanh Da Trời", "hex": "#A8C9E5"}, {"zh": "淺金", "en": "Light Gold", "vi": "Vàng Nhạt", "hex": "#E6D6B8"}, {"zh": "雲白", "en": "Cloud White", "vi": "Trắng Mây", "hex": "#F6F6F4"}, {"zh": "太空黑", "en": "Space Black", "vi": "Đen Không Gian", "hex": "#242528"}]}, "iPhone 17 Pro": {"specs": [{"spec": "256G", "price": 38000, "msrp": 39900, "unit_price": 36990}], "colors": [{"zh": "宇宙橙", "en": "Cosmic Orange", "vi": "Cam Vũ Trụ", "hex": "#D86A38"}, {"zh": "藏藍色", "en": "Deep Blue", "vi": "Xanh Đậm", "hex": "#24344D"}, {"zh": "銀色", "en": "Silver", "vi": "Bạc", "hex": "#E3E4E6"}]}, "iPhone 17 Pro Max": {"specs": [{"spec": "256G", "price": 42300, "msrp": 44900, "unit_price": 41290}], "colors": [{"zh": "宇宙橙", "en": "Cosmic Orange", "vi": "Cam Vũ Trụ", "hex": "#D86A38"}, {"zh": "藏藍色", "en": "Deep Blue", "vi": "Xanh Đậm", "hex": "#24344D"}, {"zh": "銀色", "en": "Silver", "vi": "Bạc", "hex": "#E3E4E6"}]}, "iPhone 18 Pro": {"specs": [{"spec": "256G", "price": 44500, "msrp": 44900, "unit_price": 43490}, {"spec": "512G", "price": 51000, "msrp": 51900, "unit_price": 49990}], "colors": [{"zh": "勃根地紅", "en": "Burgundy Red", "vi": "Đỏ Burgundy", "hex": "#6B242B"}, {"zh": "冰川藍", "en": "Glacier Blue", "vi": "Xanh Băng", "hex": "#8FAEC4"}, {"zh": "銀色", "en": "Silver", "vi": "Bạc", "hex": "#E3E4E6"}, {"zh": "黑色", "en": "Black", "vi": "Đen", "hex": "#232426"}]}, "iPhone 18 Pro Max": {"specs": [{"spec": "256G", "price": 49500, "msrp": 49900, "unit_price": 48990}, {"spec": "512G", "price": 56500, "msrp": 56900, "unit_price": 55990}], "colors": [{"zh": "勃根地紅", "en": "Burgundy Red", "vi": "Đỏ Burgundy", "hex": "#6B242B"}, {"zh": "冰川藍", "en": "Glacier Blue", "vi": "Xanh Băng", "hex": "#8FAEC4"}, {"zh": "銀色", "en": "Silver", "vi": "Bạc", "hex": "#E3E4E6"}, {"zh": "黑色", "en": "Black", "vi": "Đen", "hex": "#232426"}]}, "iPhone Duo": {"specs": [{"spec": "256G", "price": 74900, "msrp": 74900, "unit_price": 74900}], "colors": [{"zh": "鈦金銀", "en": "Titanium Silver", "vi": "Bạc Titan", "hex": "#D4D6D8"}, {"zh": "星宇黑", "en": "Cosmic Black", "vi": "Đen Vũ Trụ", "hex": "#222326"}]}, "iPad 11\"": {"specs": [{"spec": "128G (A16 / 2025)", "price": 14000, "msrp": 14900, "unit_price": 12990}], "colors": [{"zh": "太空灰", "en": "Space Gray", "vi": "Xám Không Gian", "hex": "#53565A"}, {"zh": "銀色", "en": "Silver", "vi": "Bạc", "hex": "#E3E4E6"}, {"zh": "藍色", "en": "Blue", "vi": "Xanh Dương", "hex": "#6E8EB2"}, {"zh": "星光色", "en": "Starlight", "vi": "Ánh Sao", "hex": "#EAE3D6"}]}, "iPad Air 11\" wifi": {"specs": [{"spec": "128G (M4 / 2026)", "price": 23500, "msrp": 24900, "unit_price": 22490}], "colors": [{"zh": "太空灰", "en": "Space Gray", "vi": "Xám Không Gian", "hex": "#53565A"}, {"zh": "銀色", "en": "Silver", "vi": "Bạc", "hex": "#E3E4E6"}, {"zh": "藍色", "en": "Blue", "vi": "Xanh Dương", "hex": "#6E8EB2"}, {"zh": "星光色", "en": "Starlight", "vi": "Ánh Sao", "hex": "#EAE3D6"}]}, "iPad Air 13\" wifi": {"specs": [{"spec": "128G (M4 / 2026)", "price": 30000, "msrp": 31900, "unit_price": 28990}], "colors": [{"zh": "太空灰", "en": "Space Gray", "vi": "Xám Không Gian", "hex": "#53565A"}, {"zh": "銀色", "en": "Silver", "vi": "Bạc", "hex": "#E3E4E6"}, {"zh": "藍色", "en": "Blue", "vi": "Xanh Dương", "hex": "#6E8EB2"}, {"zh": "星光色", "en": "Starlight", "vi": "Ánh Sao", "hex": "#EAE3D6"}]}, "iPad Pro 11\" wifi": {"specs": [{"spec": "256G (M5 / 2025)", "price": 37000, "msrp": 39900, "unit_price": 35990}], "colors": [{"zh": "太空灰", "en": "Space Gray", "vi": "Xám Không Gian", "hex": "#53565A"}, {"zh": "銀色", "en": "Silver", "vi": "Bạc", "hex": "#E3E4E6"}, {"zh": "藍色", "en": "Blue", "vi": "Xanh Dương", "hex": "#6E8EB2"}, {"zh": "星光色", "en": "Starlight", "vi": "Ánh Sao", "hex": "#EAE3D6"}]}, "iPad Pro 13\" wifi": {"specs": [{"spec": "256G (M5 / 2025)", "price": 47000, "msrp": 49900, "unit_price": 45990}], "colors": [{"zh": "太空灰", "en": "Space Gray", "vi": "Xám Không Gian", "hex": "#53565A"}, {"zh": "銀色", "en": "Silver", "vi": "Bạc", "hex": "#E3E4E6"}, {"zh": "藍色", "en": "Blue", "vi": "Xanh Dương", "hex": "#6E8EB2"}, {"zh": "星光色", "en": "Starlight", "vi": "Ánh Sao", "hex": "#EAE3D6"}]}, "AirPods 4": {"specs": [{"spec": "標準版", "price": 4100, "msrp": 4490, "unit_price": 3590}], "colors": [{"zh": "白色", "en": "White", "vi": "Trắng", "hex": "#F8FAFC"}]}, "AirPods 4 主動降噪款": {"specs": [{"spec": "主動降噪版", "price": 5000, "msrp": 5990, "unit_price": 3990}], "colors": [{"zh": "白色", "en": "White", "vi": "Trắng", "hex": "#F8FAFC"}]}, "AirPods 5": {"specs": [{"spec": "標準版", "price": 4800, "msrp": 5290, "unit_price": 4290}], "colors": [{"zh": "白色", "en": "White", "vi": "Trắng", "hex": "#F8FAFC"}]}, "AirPods 5 無線充電盒": {"specs": [{"spec": "無線充電版", "price": 6000, "msrp": 6490, "unit_price": 4990}], "colors": [{"zh": "白色", "en": "White", "vi": "Trắng", "hex": "#F8FAFC"}]}, "AirPods Pro 3": {"specs": [{"spec": "旗艦降噪", "price": 7100, "msrp": 7490, "unit_price": 6090}], "colors": [{"zh": "白色", "en": "White", "vi": "Trắng", "hex": "#F8FAFC"}]}}, "HTC": {"U24 Pro": {"specs": [{"spec": "12G/256G", "price": 10800, "msrp": 18990, "unit_price": 9790}], "colors": [{"zh": "經典黑", "en": "Classic Black", "vi": "Đen Cổ Điển", "hex": "#22252A"}, {"zh": "星河銀", "en": "Starlight Silver", "vi": "Bạc Ánh Sao", "hex": "#D4D8DD"}, {"zh": "冰川藍", "en": "Glacier Blue", "vi": "Xanh Băng", "hex": "#82A8C9"}]}}, "SAMSUNG (三星)": {"Galaxy A07": {"specs": [{"spec": "4G/128G", "price": 5600, "msrp": 5990, "unit_price": 5490}], "colors": [{"zh": "曜石黑", "en": "Awesome Black", "vi": "Đen", "hex": "#22252A"}, {"zh": "冰川藍", "en": "Awesome Iceblue", "vi": "Xanh Băng", "hex": "#9EC0DB"}, {"zh": "丁香紫", "en": "Awesome Lilac", "vi": "Tím Nhạt", "hex": "#C6B7D8"}, {"zh": "珍珠白", "en": "Awesome White", "vi": "Trắng", "hex": "#F3F4F6"}]}, "Galaxy A17": {"specs": [{"spec": "6G/128G", "price": 8000, "msrp": 8490, "unit_price": 7490}], "colors": [{"zh": "曜石黑", "en": "Awesome Black", "vi": "Đen", "hex": "#22252A"}, {"zh": "冰川藍", "en": "Awesome Iceblue", "vi": "Xanh Băng", "hex": "#9EC0DB"}, {"zh": "丁香紫", "en": "Awesome Lilac", "vi": "Tím Nhạt", "hex": "#C6B7D8"}, {"zh": "珍珠白", "en": "Awesome White", "vi": "Trắng", "hex": "#F3F4F6"}]}, "Galaxy A27": {"specs": [{"spec": "8G/128G", "price": 11000, "msrp": 11490, "unit_price": 9990}], "colors": [{"zh": "曜石黑", "en": "Awesome Black", "vi": "Đen", "hex": "#22252A"}, {"zh": "冰川藍", "en": "Awesome Iceblue", "vi": "Xanh Băng", "hex": "#9EC0DB"}, {"zh": "丁香紫", "en": "Awesome Lilac", "vi": "Tím Nhạt", "hex": "#C6B7D8"}, {"zh": "珍珠白", "en": "Awesome White", "vi": "Trắng", "hex": "#F3F4F6"}]}, "Galaxy A37": {"specs": [{"spec": "8G/128G", "price": 12500, "msrp": 13990, "unit_price": 11490}, {"spec": "8G/256G", "price": 14000, "msrp": 14990, "unit_price": 12990}], "colors": [{"zh": "曜石黑", "en": "Awesome Black", "vi": "Đen", "hex": "#22252A"}, {"zh": "冰川藍", "en": "Awesome Iceblue", "vi": "Xanh Băng", "hex": "#9EC0DB"}, {"zh": "丁香紫", "en": "Awesome Lilac", "vi": "Tím Nhạt", "hex": "#C6B7D8"}, {"zh": "珍珠白", "en": "Awesome White", "vi": "Trắng", "hex": "#F3F4F6"}]}, "Galaxy A57": {"specs": [{"spec": "8G/256G", "price": 15000, "msrp": 16990, "unit_price": 13990}, {"spec": "12G/256G", "price": 17000, "msrp": 17990, "unit_price": 15990}], "colors": [{"zh": "曜石黑", "en": "Awesome Black", "vi": "Đen", "hex": "#22252A"}, {"zh": "冰川藍", "en": "Awesome Iceblue", "vi": "Xanh Băng", "hex": "#9EC0DB"}, {"zh": "丁香紫", "en": "Awesome Lilac", "vi": "Tím Nhạt", "hex": "#C6B7D8"}, {"zh": "珍珠白", "en": "Awesome White", "vi": "Trắng", "hex": "#F3F4F6"}]}, "Galaxy S25+": {"specs": [{"spec": "12G/256G", "price": 23500, "msrp": 34900, "unit_price": 22490}], "colors": [{"zh": "冰川藍", "en": "Icy Blue", "vi": "Xanh Băng", "hex": "#9BB8D3"}, {"zh": "薄荷綠", "en": "Mint", "vi": "Xanh Bạc Hà", "hex": "#A8D5BA"}, {"zh": "曜石黑", "en": "Obsidian Black", "vi": "Đen Obsidian", "hex": "#23262B"}, {"zh": "星燦銀", "en": "Silver Shadow", "vi": "Bạc", "hex": "#CFD4DA"}]}, "Galaxy S26 FE": {"specs": [{"spec": "8G/256G", "price": 21000, "msrp": 22900, "unit_price": 19990}], "colors": [{"zh": "冰川藍", "en": "Icy Blue", "vi": "Xanh Băng", "hex": "#9BB8D3"}, {"zh": "薄荷綠", "en": "Mint", "vi": "Xanh Bạc Hà", "hex": "#A8D5BA"}, {"zh": "曜石黑", "en": "Obsidian Black", "vi": "Đen Obsidian", "hex": "#23262B"}, {"zh": "星燦銀", "en": "Silver Shadow", "vi": "Bạc", "hex": "#CFD4DA"}]}, "Galaxy S26": {"specs": [{"spec": "12G/256G", "price": 27400, "msrp": 29900, "unit_price": 26390}, {"spec": "12G/512G", "price": 31400, "msrp": 33900, "unit_price": 30390}], "colors": [{"zh": "冰川藍", "en": "Icy Blue", "vi": "Xanh Băng", "hex": "#9BB8D3"}, {"zh": "薄荷綠", "en": "Mint", "vi": "Xanh Bạc Hà", "hex": "#A8D5BA"}, {"zh": "曜石黑", "en": "Obsidian Black", "vi": "Đen Obsidian", "hex": "#23262B"}, {"zh": "星燦銀", "en": "Silver Shadow", "vi": "Bạc", "hex": "#CFD4DA"}]}, "Galaxy S26+": {"specs": [{"spec": "12G/256G", "price": 34500, "msrp": 36900, "unit_price": 33490}, {"spec": "12G/512G", "price": 39000, "msrp": 40900, "unit_price": 37990}], "colors": [{"zh": "冰川藍", "en": "Icy Blue", "vi": "Xanh Băng", "hex": "#9BB8D3"}, {"zh": "薄荷綠", "en": "Mint", "vi": "Xanh Bạc Hà", "hex": "#A8D5BA"}, {"zh": "曜石黑", "en": "Obsidian Black", "vi": "Đen Obsidian", "hex": "#23262B"}, {"zh": "星燦銀", "en": "Silver Shadow", "vi": "Bạc", "hex": "#CFD4DA"}]}, "Galaxy S26 Ultra": {"specs": [{"spec": "12G/256G", "price": 40000, "msrp": 43900, "unit_price": 38990}, {"spec": "12G/512G", "price": 44500, "msrp": 47900, "unit_price": 43490}], "colors": [{"zh": "漫遊藍", "en": "Cobalt Blue", "vi": "Xanh Coban", "hex": "#3D5A80"}, {"zh": "漫遊白", "en": "Cloud White", "vi": "Trắng Mây", "hex": "#F2F4F7"}, {"zh": "漫遊黑", "en": "Phantom Black", "vi": "Đen Huyền Bí", "hex": "#1F2328"}, {"zh": "漫遊紫", "en": "Violet", "vi": "Tím", "hex": "#9D8EC7"}]}, "Galaxy Z Fold7": {"specs": [{"spec": "12G/256G", "price": 44500, "msrp": 57888, "unit_price": 43490}], "colors": [{"zh": "曜石黑", "en": "Crafted Black", "vi": "Đen", "hex": "#1E2024"}, {"zh": "星燦銀", "en": "Silver Shadow", "vi": "Bạc", "hex": "#C7CDD4"}, {"zh": "海鹽藍", "en": "Blue", "vi": "Xanh Dương", "hex": "#4E759B"}, {"zh": "薄荷綠", "en": "Mint", "vi": "Xanh Bạc Hà", "hex": "#9CCBB3"}]}, "Galaxy Z Flip8": {"specs": [{"spec": "12G/256G", "price": 31000, "msrp": 35888, "unit_price": 29990}, {"spec": "12G/512G", "price": 35000, "msrp": 39888, "unit_price": 33990}], "colors": [{"zh": "曜石黑", "en": "Crafted Black", "vi": "Đen", "hex": "#1E2024"}, {"zh": "星燦銀", "en": "Silver Shadow", "vi": "Bạc", "hex": "#C7CDD4"}, {"zh": "海鹽藍", "en": "Blue", "vi": "Xanh Dương", "hex": "#4E759B"}, {"zh": "薄荷綠", "en": "Mint", "vi": "Xanh Bạc Hà", "hex": "#9CCBB3"}]}, "Galaxy Z Fold8": {"specs": [{"spec": "12G/256G", "price": 50500, "msrp": 58888, "unit_price": 49490}, {"spec": "12G/512G", "price": 54500, "msrp": 62888, "unit_price": 53490}], "colors": [{"zh": "曜石黑", "en": "Crafted Black", "vi": "Đen", "hex": "#1E2024"}, {"zh": "星燦銀", "en": "Silver Shadow", "vi": "Bạc", "hex": "#C7CDD4"}, {"zh": "海鹽藍", "en": "Blue", "vi": "Xanh Dương", "hex": "#4E759B"}, {"zh": "薄荷綠", "en": "Mint", "vi": "Xanh Bạc Hà", "hex": "#9CCBB3"}]}, "Galaxy Z Fold8 Ultra": {"specs": [{"spec": "12G/256G", "price": 55000, "msrp": 64900, "unit_price": 53990}, {"spec": "12G/512G", "price": 58000, "msrp": 68900, "unit_price": 56990}], "colors": [{"zh": "曜石黑", "en": "Crafted Black", "vi": "Đen", "hex": "#1E2024"}, {"zh": "星燦銀", "en": "Silver Shadow", "vi": "Bạc", "hex": "#C7CDD4"}, {"zh": "海鹽藍", "en": "Blue", "vi": "Xanh Dương", "hex": "#4E759B"}, {"zh": "薄荷綠", "en": "Mint", "vi": "Xanh Bạc Hà", "hex": "#9CCBB3"}]}, "Galaxy Tab A11 8.7\" wifi": {"specs": [{"spec": "4G/64G", "price": 5400, "msrp": 5490, "unit_price": 4390}], "colors": [{"zh": "曜石黑", "en": "Awesome Black", "vi": "Đen", "hex": "#22252A"}, {"zh": "冰川藍", "en": "Awesome Iceblue", "vi": "Xanh Băng", "hex": "#9EC0DB"}, {"zh": "丁香紫", "en": "Awesome Lilac", "vi": "Tím Nhạt", "hex": "#C6B7D8"}, {"zh": "珍珠白", "en": "Awesome White", "vi": "Trắng", "hex": "#F3F4F6"}]}, "Galaxy Tab A11+ 11\" wifi": {"specs": [{"spec": "6G/128G", "price": 8400, "msrp": 8990, "unit_price": 7390}], "colors": [{"zh": "曜石黑", "en": "Awesome Black", "vi": "Đen", "hex": "#22252A"}, {"zh": "冰川藍", "en": "Awesome Iceblue", "vi": "Xanh Băng", "hex": "#9EC0DB"}, {"zh": "丁香紫", "en": "Awesome Lilac", "vi": "Tím Nhạt", "hex": "#C6B7D8"}, {"zh": "珍珠白", "en": "Awesome White", "vi": "Trắng", "hex": "#F3F4F6"}]}, "Galaxy Tab S10 Lite 10.9\" wifi": {"specs": [{"spec": "6G/128G", "price": 10000, "msrp": 11990, "unit_price": 8990}], "colors": [{"zh": "曜石黑", "en": "Awesome Black", "vi": "Đen", "hex": "#22252A"}, {"zh": "冰川藍", "en": "Awesome Iceblue", "vi": "Xanh Băng", "hex": "#9EC0DB"}, {"zh": "丁香紫", "en": "Awesome Lilac", "vi": "Tím Nhạt", "hex": "#C6B7D8"}, {"zh": "珍珠白", "en": "Awesome White", "vi": "Trắng", "hex": "#F3F4F6"}]}, "Galaxy Tab S12+ 12.6\" wifi": {"specs": [{"spec": "12G/256G", "price": 36000, "msrp": 39900, "unit_price": 34990}], "colors": [{"zh": "曜石黑", "en": "Awesome Black", "vi": "Đen", "hex": "#22252A"}, {"zh": "冰川藍", "en": "Awesome Iceblue", "vi": "Xanh Băng", "hex": "#9EC0DB"}, {"zh": "丁香紫", "en": "Awesome Lilac", "vi": "Tím Nhạt", "hex": "#C6B7D8"}, {"zh": "珍珠白", "en": "Awesome White", "vi": "Trắng", "hex": "#F3F4F6"}]}}, "Sharp": {"AQUOS wish5": {"specs": [{"spec": "6G/128G", "price": 5500, "msrp": 7490, "unit_price": 4490}], "colors": [{"zh": "經典黑", "en": "Classic Black", "vi": "Đen Cổ Điển", "hex": "#22252A"}, {"zh": "星河銀", "en": "Starlight Silver", "vi": "Bạc Ánh Sao", "hex": "#D4D8DD"}, {"zh": "冰川藍", "en": "Glacier Blue", "vi": "Xanh Băng", "hex": "#82A8C9"}]}, "AQUOS wish6": {"specs": [{"spec": "8G/256G", "price": 13500, "msrp": 13990, "unit_price": 12490}], "colors": [{"zh": "經典黑", "en": "Classic Black", "vi": "Đen Cổ Điển", "hex": "#22252A"}, {"zh": "星河銀", "en": "Starlight Silver", "vi": "Bạc Ánh Sao", "hex": "#D4D8DD"}, {"zh": "冰川藍", "en": "Glacier Blue", "vi": "Xanh Băng", "hex": "#82A8C9"}]}, "AQUOS sense10": {"specs": [{"spec": "8G/256G", "price": 11000, "msrp": 14990, "unit_price": 9990}], "colors": [{"zh": "經典黑", "en": "Classic Black", "vi": "Đen Cổ Điển", "hex": "#22252A"}, {"zh": "星河銀", "en": "Starlight Silver", "vi": "Bạc Ánh Sao", "hex": "#D4D8DD"}, {"zh": "冰川藍", "en": "Glacier Blue", "vi": "Xanh Băng", "hex": "#82A8C9"}]}, "AQUOS R11": {"specs": [{"spec": "12G/256G", "price": 25000, "msrp": 29990, "unit_price": 23990}], "colors": [{"zh": "經典黑", "en": "Classic Black", "vi": "Đen Cổ Điển", "hex": "#22252A"}, {"zh": "星河銀", "en": "Starlight Silver", "vi": "Bạc Ánh Sao", "hex": "#D4D8DD"}, {"zh": "冰川藍", "en": "Glacier Blue", "vi": "Xanh Băng", "hex": "#82A8C9"}]}}, "Sony": {"Xperia 10 VIII": {"specs": [{"spec": "8G/128G", "price": 19000, "msrp": 19990, "unit_price": 17990}], "colors": [{"zh": "經典黑", "en": "Classic Black", "vi": "Đen Cổ Điển", "hex": "#22252A"}, {"zh": "星河銀", "en": "Starlight Silver", "vi": "Bạc Ánh Sao", "hex": "#D4D8DD"}, {"zh": "冰川藍", "en": "Glacier Blue", "vi": "Xanh Băng", "hex": "#82A8C9"}]}, "Xperia 1 VIII": {"specs": [{"spec": "12G/256G", "price": 41000, "msrp": 43990, "unit_price": 39990}, {"spec": "12G/512G", "price": 47000, "msrp": 49990, "unit_price": 45990}], "colors": [{"zh": "經典黑", "en": "Classic Black", "vi": "Đen Cổ Điển", "hex": "#22252A"}, {"zh": "星河銀", "en": "Starlight Silver", "vi": "Bạc Ánh Sao", "hex": "#D4D8DD"}, {"zh": "冰川藍", "en": "Glacier Blue", "vi": "Xanh Băng", "hex": "#82A8C9"}]}}, "Google Pixel": {"Pixel 10a": {"specs": [{"spec": "8G/128G", "price": 13000, "msrp": 16490, "unit_price": 11990}, {"spec": "8G/256G", "price": 16000, "msrp": 19990, "unit_price": 14990}], "colors": [{"zh": "曜石黑", "en": "Obsidian", "vi": "Đen Obsidian", "hex": "#232529"}, {"zh": "陶瓷米", "en": "Porcelain", "vi": "Trắng Sứ", "hex": "#EDE9E1"}, {"zh": "石英粉", "en": "Rose Quartz", "vi": "Hồng Thạch Anh", "hex": "#E4C2C6"}, {"zh": "嫩芽綠", "en": "Wintergreen", "vi": "Xanh Bạc Hà", "hex": "#B7D1C1"}]}, "Pixel 11": {"specs": [{"spec": "12G/256G", "price": 27000, "msrp": 29990, "unit_price": 25990}, {"spec": "12G/512G", "price": 31000, "msrp": 34990, "unit_price": 29990}], "colors": [{"zh": "曜石黑", "en": "Obsidian", "vi": "Đen Obsidian", "hex": "#232529"}, {"zh": "陶瓷米", "en": "Porcelain", "vi": "Trắng Sứ", "hex": "#EDE9E1"}, {"zh": "石英粉", "en": "Rose Quartz", "vi": "Hồng Thạch Anh", "hex": "#E4C2C6"}, {"zh": "嫩芽綠", "en": "Wintergreen", "vi": "Xanh Bạc Hà", "hex": "#B7D1C1"}]}, "Pixel 11 Pro": {"specs": [{"spec": "12G/256G", "price": 34000, "msrp": 36990, "unit_price": 32990}, {"spec": "16G/512G", "price": 38000, "msrp": 41990, "unit_price": 36990}], "colors": [{"zh": "曜石黑", "en": "Obsidian", "vi": "Đen Obsidian", "hex": "#232529"}, {"zh": "陶瓷米", "en": "Porcelain", "vi": "Trắng Sứ", "hex": "#EDE9E1"}, {"zh": "石英粉", "en": "Rose Quartz", "vi": "Hồng Thạch Anh", "hex": "#E4C2C6"}, {"zh": "嫩芽綠", "en": "Wintergreen", "vi": "Xanh Bạc Hà", "hex": "#B7D1C1"}]}, "Pixel 11 Pro XL": {"specs": [{"spec": "12G/256G", "price": 38500, "msrp": 42990, "unit_price": 37490}, {"spec": "16G/512G", "price": 42000, "msrp": 46990, "unit_price": 40990}], "colors": [{"zh": "曜石黑", "en": "Obsidian", "vi": "Đen Obsidian", "hex": "#232529"}, {"zh": "陶瓷米", "en": "Porcelain", "vi": "Trắng Sứ", "hex": "#EDE9E1"}, {"zh": "石英粉", "en": "Rose Quartz", "vi": "Hồng Thạch Anh", "hex": "#E4C2C6"}, {"zh": "嫩芽綠", "en": "Wintergreen", "vi": "Xanh Bạc Hà", "hex": "#B7D1C1"}]}, "Pixel 11 Pro Fold": {"specs": [{"spec": "16G/256G", "price": 55000, "msrp": 59990, "unit_price": 53990}, {"spec": "16G/512G", "price": 59000, "msrp": 64990, "unit_price": 57990}], "colors": [{"zh": "曜石黑", "en": "Obsidian", "vi": "Đen Obsidian", "hex": "#232529"}, {"zh": "陶瓷米", "en": "Porcelain", "vi": "Trắng Sứ", "hex": "#EDE9E1"}, {"zh": "石英粉", "en": "Rose Quartz", "vi": "Hồng Thạch Anh", "hex": "#E4C2C6"}, {"zh": "嫩芽綠", "en": "Wintergreen", "vi": "Xanh Bạc Hà", "hex": "#B7D1C1"}]}, "Pixel 10 Pro Fold": {"specs": [{"spec": "16G/256G", "price": 44000, "msrp": 56990, "unit_price": 42990}, {"spec": "16G/512G", "price": 46500, "msrp": 60990, "unit_price": 45490}], "colors": [{"zh": "曜石黑", "en": "Obsidian", "vi": "Đen Obsidian", "hex": "#232529"}, {"zh": "陶瓷米", "en": "Porcelain", "vi": "Trắng Sứ", "hex": "#EDE9E1"}, {"zh": "石英粉", "en": "Rose Quartz", "vi": "Hồng Thạch Anh", "hex": "#E4C2C6"}, {"zh": "嫩芽綠", "en": "Wintergreen", "vi": "Xanh Bạc Hà", "hex": "#B7D1C1"}]}, "Pixel 9 Pro Fold": {"specs": [{"spec": "16G/256G", "price": 29000, "msrp": 56990, "unit_price": 27990}, {"spec": "16G/512G", "price": 35000, "msrp": 60990, "unit_price": 33990}], "colors": [{"zh": "曜石黑", "en": "Obsidian", "vi": "Đen Obsidian", "hex": "#232529"}, {"zh": "陶瓷米", "en": "Porcelain", "vi": "Trắng Sứ", "hex": "#EDE9E1"}, {"zh": "石英粉", "en": "Rose Quartz", "vi": "Hồng Thạch Anh", "hex": "#E4C2C6"}, {"zh": "嫩芽綠", "en": "Wintergreen", "vi": "Xanh Bạc Hà", "hex": "#B7D1C1"}]}}, "HONOR": {"X6d": {"specs": [{"spec": "8G/256G", "price": 7500, "msrp": 7990, "unit_price": 6490}], "colors": [{"zh": "經典黑", "en": "Classic Black", "vi": "Đen Cổ Điển", "hex": "#22252A"}, {"zh": "星河銀", "en": "Starlight Silver", "vi": "Bạc Ánh Sao", "hex": "#D4D8DD"}, {"zh": "冰川藍", "en": "Glacier Blue", "vi": "Xanh Băng", "hex": "#82A8C9"}]}, "600s": {"specs": [{"spec": "6G/128G", "price": 9500, "msrp": 9990, "unit_price": 8490}], "colors": [{"zh": "經典黑", "en": "Classic Black", "vi": "Đen Cổ Điển", "hex": "#22252A"}, {"zh": "星河銀", "en": "Starlight Silver", "vi": "Bạc Ánh Sao", "hex": "#D4D8DD"}, {"zh": "冰川藍", "en": "Glacier Blue", "vi": "Xanh Băng", "hex": "#82A8C9"}]}, "600 lite": {"specs": [{"spec": "8G/256G", "price": 13500, "msrp": 14990, "unit_price": 12490}], "colors": [{"zh": "經典黑", "en": "Classic Black", "vi": "Đen Cổ Điển", "hex": "#22252A"}, {"zh": "星河銀", "en": "Starlight Silver", "vi": "Bạc Ánh Sao", "hex": "#D4D8DD"}, {"zh": "冰川藍", "en": "Glacier Blue", "vi": "Xanh Băng", "hex": "#82A8C9"}]}, "600": {"specs": [{"spec": "12G/256G", "price": 15000, "msrp": 16990, "unit_price": 13990}], "colors": [{"zh": "經典黑", "en": "Classic Black", "vi": "Đen Cổ Điển", "hex": "#22252A"}, {"zh": "星河銀", "en": "Starlight Silver", "vi": "Bạc Ánh Sao", "hex": "#D4D8DD"}, {"zh": "冰川藍", "en": "Glacier Blue", "vi": "Xanh Băng", "hex": "#82A8C9"}]}, "600 Pro": {"specs": [{"spec": "12G/512G", "price": 25000, "msrp": 27990, "unit_price": 23990}], "colors": [{"zh": "經典黑", "en": "Classic Black", "vi": "Đen Cổ Điển", "hex": "#22252A"}, {"zh": "星河銀", "en": "Starlight Silver", "vi": "Bạc Ánh Sao", "hex": "#D4D8DD"}, {"zh": "冰川藍", "en": "Glacier Blue", "vi": "Xanh Băng", "hex": "#82A8C9"}]}, "600 Pro molly限量版": {"specs": [{"spec": "12G/512G", "price": 28000, "msrp": 30990, "unit_price": 26990}], "colors": [{"zh": "經典黑", "en": "Classic Black", "vi": "Đen Cổ Điển", "hex": "#22252A"}, {"zh": "星河銀", "en": "Starlight Silver", "vi": "Bạc Ánh Sao", "hex": "#D4D8DD"}, {"zh": "冰川藍", "en": "Glacier Blue", "vi": "Xanh Băng", "hex": "#82A8C9"}]}, "Magic V6": {"specs": [{"spec": "16G/512G", "price": 59000, "msrp": 64990, "unit_price": 57990}], "colors": [{"zh": "經典黑", "en": "Classic Black", "vi": "Đen Cổ Điển", "hex": "#22252A"}, {"zh": "星河銀", "en": "Starlight Silver", "vi": "Bạc Ánh Sao", "hex": "#D4D8DD"}, {"zh": "冰川藍", "en": "Glacier Blue", "vi": "Xanh Băng", "hex": "#82A8C9"}]}}, "Motorola (Moto)": {"edge 70 fusion": {"specs": [{"spec": "8G/256G", "price": 10200, "msrp": 11990, "unit_price": 9190}], "colors": [{"zh": "經典黑", "en": "Classic Black", "vi": "Đen Cổ Điển", "hex": "#22252A"}, {"zh": "星河銀", "en": "Starlight Silver", "vi": "Bạc Ánh Sao", "hex": "#D4D8DD"}, {"zh": "冰川藍", "en": "Glacier Blue", "vi": "Xanh Băng", "hex": "#82A8C9"}]}}, "Xiaomi / Redmi (小米)": {"紅米 17 5G": {"specs": [{"spec": "4G/128G", "price": 7000, "msrp": 7490, "unit_price": 6490}, {"spec": "6G/256G", "price": 7500, "msrp": 7990, "unit_price": 6990}], "colors": [{"zh": "曜石黑", "en": "Obsidian Black", "vi": "Đen Obsidian", "hex": "#222428"}, {"zh": "冰川藍", "en": "Glacier Blue", "vi": "Xanh Băng", "hex": "#8EB4D2"}, {"zh": "鈦銀灰", "en": "Titan Gray", "vi": "Xám Titan", "hex": "#8B9098"}]}, "紅米 Note 15 pro+": {"specs": [{"spec": "12G/512G", "price": 12800, "msrp": 13990, "unit_price": 11790}], "colors": [{"zh": "曜石黑", "en": "Obsidian Black", "vi": "Đen Obsidian", "hex": "#222428"}, {"zh": "冰川藍", "en": "Glacier Blue", "vi": "Xanh Băng", "hex": "#8EB4D2"}, {"zh": "鈦銀灰", "en": "Titan Gray", "vi": "Xám Titan", "hex": "#8B9098"}]}, "紅米 Note 17 5G": {"specs": [{"spec": "6G/128G", "price": 9400, "msrp": 9990, "unit_price": 8390}, {"spec": "8G/256G", "price": 10000, "msrp": 10990, "unit_price": 8990}], "colors": [{"zh": "曜石黑", "en": "Obsidian Black", "vi": "Đen Obsidian", "hex": "#222428"}, {"zh": "冰川藍", "en": "Glacier Blue", "vi": "Xanh Băng", "hex": "#8EB4D2"}, {"zh": "鈦銀灰", "en": "Titan Gray", "vi": "Xám Titan", "hex": "#8B9098"}]}, "小米 17T": {"specs": [{"spec": "12G/256G", "price": 15000, "msrp": 16990, "unit_price": 13990}], "colors": [{"zh": "曜石黑", "en": "Obsidian Black", "vi": "Đen Obsidian", "hex": "#222428"}, {"zh": "冰川藍", "en": "Glacier Blue", "vi": "Xanh Băng", "hex": "#8EB4D2"}, {"zh": "鈦銀灰", "en": "Titan Gray", "vi": "Xám Titan", "hex": "#8B9098"}]}}, "Nokia": {"215 4G (2024)": {"specs": [{"spec": "64M/128M", "price": 1700, "msrp": 1990, "unit_price": 1590}], "colors": [{"zh": "經典黑", "en": "Classic Black", "vi": "Đen Cổ Điển", "hex": "#22252A"}, {"zh": "星河銀", "en": "Starlight Silver", "vi": "Bạc Ánh Sao", "hex": "#D4D8DD"}, {"zh": "冰川藍", "en": "Glacier Blue", "vi": "Xanh Băng", "hex": "#82A8C9"}]}, "2660 Flip 4G": {"specs": [{"spec": "48M/128M", "price": 2800, "msrp": 2990, "unit_price": 2290}], "colors": [{"zh": "經典黑", "en": "Classic Black", "vi": "Đen Cổ Điển", "hex": "#22252A"}, {"zh": "星河銀", "en": "Starlight Silver", "vi": "Bạc Ánh Sao", "hex": "#D4D8DD"}, {"zh": "冰川藍", "en": "Glacier Blue", "vi": "Xanh Băng", "hex": "#82A8C9"}]}}, "OPPO": {"A6x": {"specs": [{"spec": "6G/128G", "price": 6300, "msrp": 6490, "unit_price": 5290}], "colors": [{"zh": "星光黑", "en": "Starry Black", "vi": "Đen Ánh Sao", "hex": "#232529"}, {"zh": "流光紫", "en": "Glowing Purple", "vi": "Tím", "hex": "#A48DC4"}, {"zh": "碧波綠", "en": "Ripple Green", "vi": "Xanh Lục", "hex": "#6D9B89"}]}, "A7 Pro": {"specs": [{"spec": "8G/128G", "price": 12000, "msrp": 12990, "unit_price": 10990}, {"spec": "8G/256G", "price": 13000, "msrp": 13990, "unit_price": 11990}], "colors": [{"zh": "星光黑", "en": "Starry Black", "vi": "Đen Ánh Sao", "hex": "#232529"}, {"zh": "流光紫", "en": "Glowing Purple", "vi": "Tím", "hex": "#A48DC4"}, {"zh": "碧波綠", "en": "Ripple Green", "vi": "Xanh Lục", "hex": "#6D9B89"}]}, "A7 Pro Max": {"specs": [{"spec": "8G/256G", "price": 17000, "msrp": 18990, "unit_price": 15990}], "colors": [{"zh": "星光黑", "en": "Starry Black", "vi": "Đen Ánh Sao", "hex": "#232529"}, {"zh": "流光紫", "en": "Glowing Purple", "vi": "Tím", "hex": "#A48DC4"}, {"zh": "碧波綠", "en": "Ripple Green", "vi": "Xanh Lục", "hex": "#6D9B89"}]}, "Reno16 F": {"specs": [{"spec": "8G/128G", "price": 11800, "msrp": 12990, "unit_price": 10790}, {"spec": "8G/256G", "price": 13200, "msrp": 14990, "unit_price": 12190}], "colors": [{"zh": "人魚姬", "en": "Iridescent Glow", "vi": "Ánh Ngọc Trai", "hex": "#E6D6E8"}, {"zh": "星河藍", "en": "Starlight Blue", "vi": "Xanh Ánh Sao", "hex": "#789BC2"}, {"zh": "曜石黑", "en": "Obsidian Black", "vi": "Đen", "hex": "#232529"}]}, "Reno16": {"specs": [{"spec": "8G/256G", "price": 18000, "msrp": 19990, "unit_price": 16990}, {"spec": "12G/256G", "price": 19500, "msrp": 21990, "unit_price": 18490}], "colors": [{"zh": "人魚姬", "en": "Iridescent Glow", "vi": "Ánh Ngọc Trai", "hex": "#E6D6E8"}, {"zh": "星河藍", "en": "Starlight Blue", "vi": "Xanh Ánh Sao", "hex": "#789BC2"}, {"zh": "曜石黑", "en": "Obsidian Black", "vi": "Đen", "hex": "#232529"}]}, "Find X9": {"specs": [{"spec": "12G/256G", "price": 20800, "msrp": 25990, "unit_price": 19790}], "colors": [{"zh": "日出峽谷", "en": "Sunrise Canyon", "vi": "Cam Hoàng Hôn", "hex": "#C97B53"}, {"zh": "大地苔原", "en": "Tundra Green", "vi": "Xanh Rêu", "hex": "#4F6356"}, {"zh": "絨砂鈦", "en": "Sand Titanium", "vi": "Titan Cát", "hex": "#B8B0A4"}, {"zh": "星宇黑", "en": "Space Black", "vi": "Đen Vũ Trụ", "hex": "#232528"}]}, "Find X9s": {"specs": [{"spec": "12G/256G", "price": 20500, "msrp": 25990, "unit_price": 19490}], "colors": [{"zh": "日出峽谷", "en": "Sunrise Canyon", "vi": "Cam Hoàng Hôn", "hex": "#C97B53"}, {"zh": "大地苔原", "en": "Tundra Green", "vi": "Xanh Rêu", "hex": "#4F6356"}, {"zh": "絨砂鈦", "en": "Sand Titanium", "vi": "Titan Cát", "hex": "#B8B0A4"}, {"zh": "星宇黑", "en": "Space Black", "vi": "Đen Vũ Trụ", "hex": "#232528"}]}, "Find X9 Ultra": {"specs": [{"spec": "12G/512G", "price": 46000, "msrp": 49990, "unit_price": 44990}, {"spec": "16G/1T", "price": 56000, "msrp": 59990, "unit_price": 54990}], "colors": [{"zh": "日出峽谷", "en": "Sunrise Canyon", "vi": "Cam Hoàng Hôn", "hex": "#C97B53"}, {"zh": "大地苔原", "en": "Tundra Green", "vi": "Xanh Rêu", "hex": "#4F6356"}, {"zh": "絨砂鈦", "en": "Sand Titanium", "vi": "Titan Cát", "hex": "#B8B0A4"}, {"zh": "星宇黑", "en": "Space Black", "vi": "Đen Vũ Trụ", "hex": "#232528"}]}, "Find N6": {"specs": [{"spec": "16G/512G", "price": 58000, "msrp": 64990, "unit_price": 56990}], "colors": [{"zh": "日出峽谷", "en": "Sunrise Canyon", "vi": "Cam Hoàng Hôn", "hex": "#C97B53"}, {"zh": "大地苔原", "en": "Tundra Green", "vi": "Xanh Rêu", "hex": "#4F6356"}, {"zh": "絨砂鈦", "en": "Sand Titanium", "vi": "Titan Cát", "hex": "#B8B0A4"}, {"zh": "星宇黑", "en": "Space Black", "vi": "Đen Vũ Trụ", "hex": "#232528"}]}}, "vivo": {"Y05 4G": {"specs": [{"spec": "4G/128G", "price": 5000, "msrp": 5490, "unit_price": 4490}], "colors": [{"zh": "山海青", "en": "Ocean Cyan", "vi": "Xanh Ngọc", "hex": "#6BA4A8"}, {"zh": "花似錦", "en": "Petal Pink", "vi": "Hồng Phấn", "hex": "#E2B4BE"}, {"zh": "玄武黑", "en": "Basalt Black", "vi": "Đen Huyền Vũ", "hex": "#23262B"}]}, "Y21 5G": {"specs": [{"spec": "4G/128G", "price": 5900, "msrp": 6490, "unit_price": 4890}], "colors": [{"zh": "山海青", "en": "Ocean Cyan", "vi": "Xanh Ngọc", "hex": "#6BA4A8"}, {"zh": "花似錦", "en": "Petal Pink", "vi": "Hồng Phấn", "hex": "#E2B4BE"}, {"zh": "玄武黑", "en": "Basalt Black", "vi": "Đen Huyền Vũ", "hex": "#23262B"}]}, "Y31 5G": {"specs": [{"spec": "8G/256G", "price": 9000, "msrp": 9990, "unit_price": 7990}], "colors": [{"zh": "山海青", "en": "Ocean Cyan", "vi": "Xanh Ngọc", "hex": "#6BA4A8"}, {"zh": "花似錦", "en": "Petal Pink", "vi": "Hồng Phấn", "hex": "#E2B4BE"}, {"zh": "玄武黑", "en": "Basalt Black", "vi": "Đen Huyền Vũ", "hex": "#23262B"}]}, "V70 FE": {"specs": [{"spec": "8G/256G", "price": 13000, "msrp": 14990, "unit_price": 11990}, {"spec": "12G/256G", "price": 14500, "msrp": 16990, "unit_price": 13490}], "colors": [{"zh": "山海青", "en": "Ocean Cyan", "vi": "Xanh Ngọc", "hex": "#6BA4A8"}, {"zh": "花似錦", "en": "Petal Pink", "vi": "Hồng Phấn", "hex": "#E2B4BE"}, {"zh": "玄武黑", "en": "Basalt Black", "vi": "Đen Huyền Vũ", "hex": "#23262B"}]}, "V70": {"specs": [{"spec": "12G/256G", "price": 16700, "msrp": 19990, "unit_price": 15690}], "colors": [{"zh": "山海青", "en": "Ocean Cyan", "vi": "Xanh Ngọc", "hex": "#6BA4A8"}, {"zh": "花似錦", "en": "Petal Pink", "vi": "Hồng Phấn", "hex": "#E2B4BE"}, {"zh": "玄武黑", "en": "Basalt Black", "vi": "Đen Huyền Vũ", "hex": "#23262B"}]}, "X300 Ultra": {"specs": [{"spec": "16G/512G", "price": 44000, "msrp": 46990, "unit_price": 42990}, {"spec": "16G/1T", "price": 54000, "msrp": 56990, "unit_price": 52990}], "colors": [{"zh": "曠野棕", "en": "Dune Gold", "vi": "Vàng Nâu Sa Mạc", "hex": "#9E8368"}, {"zh": "星空灰", "en": "Space Gray", "vi": "Xám Không Gian", "hex": "#4B5058"}, {"zh": "晴天白", "en": "Cloud White", "vi": "Trắng Mây", "hex": "#F3F4F6"}, {"zh": "曜石黑", "en": "Obsidian Black", "vi": "Đen", "hex": "#1F2226"}]}}, "iQOO": {"iQOO Z11": {"specs": [{"spec": "12G/256G", "price": 17000, "msrp": 18990, "unit_price": 15990}], "colors": [{"zh": "經典黑", "en": "Classic Black", "vi": "Đen Cổ Điển", "hex": "#22252A"}, {"zh": "星河銀", "en": "Starlight Silver", "vi": "Bạc Ánh Sao", "hex": "#D4D8DD"}, {"zh": "冰川藍", "en": "Glacier Blue", "vi": "Xanh Băng", "hex": "#82A8C9"}]}, "iQOO 15": {"specs": [{"spec": "16G/512G", "price": 28000, "msrp": 31990, "unit_price": 26990}], "colors": [{"zh": "經典黑", "en": "Classic Black", "vi": "Đen Cổ Điển", "hex": "#22252A"}, {"zh": "星河銀", "en": "Starlight Silver", "vi": "Bạc Ánh Sao", "hex": "#D4D8DD"}, {"zh": "冰川藍", "en": "Glacier Blue", "vi": "Xanh Băng", "hex": "#82A8C9"}]}}};
+
+    const DEFAULT_RATES = { 2: 1.05, 3: 1.075, 4: 1.10, 5: 1.25, 6: 1.14, 7: 1.16 };
+    const DEFAULT_CONTACT = "Messenger : Terry Chen Pega";
+    const DEFAULT_SHOP = "冠科通訊 GUAN KE MOBILE";
+
+    const DEFAULT_FREEBIES = [
+      { zh: "快速充電器(33W)", en: "33W Fast Charger", vi: "Củ sạc nhanh 33W", value: 590, checked: true },
+      { zh: "防摔殼", en: "Shockproof Case", vi: "Ốp lưng chống sốc", value: 690, checked: true },
+      { zh: "滿版鋼化玻璃貼", en: "Tempered Glass Protector", vi: "Kính cường lực full màn", value: 490, checked: true },
+      { zh: "充電線Type-C to Type-C", en: "Type-C to Type-C Cable", vi: "Cáp sạc Type-C to Type-C", value: 390, checked: true },
+      { zh: "電容觸控筆", en: "Capacitive Stylus Pen", vi: "Bút cảm ứng điện dung", value: 590, checked: true },
+      { zh: "折疊翻蓋保護殼", en: "Foldable Flip Cover Case", vi: "Ốp lưng gập nắp bảo vệ", value: 690, checked: true }
+    ];
+
+    const safeStorage = {
+      get(k) { try { return safeStorage.get(k); } catch (e) { return null; } },
+      set(k, v) { try { safeStorage.set(k, v); } catch (e) {} }
+    };
+    let freebies = JSON.parse(safeStorage.get("gk_freebies_v5") || "null") || JSON.parse(JSON.stringify(DEFAULT_FREEBIES));
+
+    const el = (id) => document.getElementById(id);
+    const fmt = (n) => "$" + Math.round(Number(n) || 0).toLocaleString("en-US");
+
+    function initRatesAndContact() {
+      const savedRates = JSON.parse(safeStorage.get("gk_rates_v5") || "null") || DEFAULT_RATES;
+      [2, 3, 4, 5, 6, 7].forEach(t => {
+        if (el("rate" + t)) el("rate" + t).value = savedRates[t] ?? DEFAULT_RATES[t];
+      });
+      el("contactAccountInput").value = safeStorage.get("gk_contact_v5") || DEFAULT_CONTACT;
+      el("shopNameInput").value = safeStorage.get("gk_shop_v5") || DEFAULT_SHOP;
+    }
+
+    function populateBrands(filterText = "") {
+      const brandSel = el("brandSelect");
+      const prevBrand = brandSel.value;
+      const kw = filterText.trim().toLowerCase();
+      brandSel.innerHTML = "";
+
+      const matchingBrands = Object.keys(PHONE_CATALOG).filter(b => {
+        if (!kw) return true;
+        if (b.toLowerCase().includes(kw)) return true;
+        return Object.keys(PHONE_CATALOG[b]).some(m => m.toLowerCase().includes(kw));
+      });
+
+      const brandsToRender = matchingBrands.length ? matchingBrands : Object.keys(PHONE_CATALOG);
+      brandsToRender.forEach(b => {
+        const opt = document.createElement("option");
+        opt.value = b;
+        opt.textContent = b;
+        brandSel.appendChild(opt);
+      });
+
+      if (brandsToRender.includes(prevBrand)) {
+        brandSel.value = prevBrand;
+      }
+      populateModels(filterText);
+    }
+
+    function populateModels(filterText = "") {
+      const brand = el("brandSelect").value;
+      const modelSel = el("modelSelect");
+      const prevModel = modelSel.value;
+      const kw = filterText.trim().toLowerCase();
+      modelSel.innerHTML = "";
+
+      const allModels = Object.keys(PHONE_CATALOG[brand] || {});
+      const filteredModels = kw
+        ? allModels.filter(m => m.toLowerCase().includes(kw) || brand.toLowerCase().includes(kw))
+        : allModels;
+      const modelsToRender = filteredModels.length ? filteredModels : allModels;
+
+      modelsToRender.forEach(m => {
+        const opt = document.createElement("option");
+        opt.value = m;
+        opt.textContent = m;
+        modelSel.appendChild(opt);
+      });
+
+      if (modelsToRender.includes(prevModel)) {
+        modelSel.value = prevModel;
+      } else if (modelsToRender.includes("iPhone 18 Pro Max")) {
+        modelSel.value = "iPhone 18 Pro Max";
+      }
+      populateSpecsAndColors();
+    }
+
+    function populateSpecsAndColors() {
+      const brand = el("brandSelect").value;
+      const model = el("modelSelect").value;
+      const entry = (PHONE_CATALOG[brand] && PHONE_CATALOG[brand][model]) || null;
+      const specSel = el("specSelect");
+      const colorSel = el("colorSelect");
+
+      specSel.innerHTML = "";
+      colorSel.innerHTML = "";
+
+      if (!entry) return;
+
+      entry.specs.forEach((s, idx) => {
+        const opt = document.createElement("option");
+        opt.value = idx;
+        opt.textContent = `${s.spec}  (出售價 $${s.price.toLocaleString()})`;
+        specSel.appendChild(opt);
+      });
+
+      entry.colors.forEach((c, idx) => {
+        const opt = document.createElement("option");
+        opt.value = idx;
+        opt.textContent = `${c.zh} / ${c.en} / ${c.vi}`;
+        colorSel.appendChild(opt);
+      });
+
+      applySelectedSpecPrice();
+    }
+
+    function applySelectedSpecPrice() {
+      const brand = el("brandSelect").value;
+      const model = el("modelSelect").value;
+      const entry = (PHONE_CATALOG[brand] && PHONE_CATALOG[brand][model]) || null;
+      if (!entry) return;
+      const specIdx = parseInt(el("specSelect").value || "0", 10);
+      const specObj = entry.specs[specIdx] || entry.specs[0];
+      if (specObj) {
+        el("basePriceInput").value = specObj.price;
+        el("msrpPriceInput").value = specObj.msrp;
+      }
+      updateQuote();
+    }
+
+    function renderFreebiesAdmin() {
+      const container = el("freebiesList");
+      container.innerHTML = "";
+      freebies.forEach((item, idx) => {
+        const row = document.createElement("div");
+        row.className = "flex items-center justify-between gap-2 p-2 rounded-xl bg-slate-50 border border-slate-200 text-xs";
+        row.innerHTML = `
+          <label class="flex items-center gap-2 cursor-pointer flex-1">
+            <input type="checkbox" data-idx="${idx}" class="freebie-cb rounded text-amber-600" ${item.checked ? "checked" : ""} />
+            <span class="font-bold text-slate-800">${item.zh}</span>
+            <span class="text-slate-400 hidden sm:inline">(${item.en} / ${item.vi})</span>
+          </label>
+          <div class="flex items-center gap-2">
+            <span class="font-bold text-amber-700">$${item.value}</span>
+            <button type="button" data-del="${idx}" class="del-freebie text-slate-400 hover:text-rose-600 font-bold px-1">&times;</button>
+          </div>
+        `;
+        container.appendChild(row);
+      });
+      safeStorage.set("gk_freebies_v5", JSON.stringify(freebies));
+    }
+
+    function getRates() {
+      const r = {};
+      [2, 3, 4, 5, 6, 7].forEach(t => {
+        r[t] = parseFloat(el("rate" + t).value) || DEFAULT_RATES[t];
+      });
+      safeStorage.set("gk_rates_v5", JSON.stringify(r));
+      return r;
+    }
+
+    function calcMonthly(basePrice, downPayment, term, rate) {
+      const principal = Math.max(0, basePrice - downPayment);
+      return Math.ceil((principal * rate) / term);
+    }
+
+    function updateQuote() {
+      try {
+        const now = new Date();
+        el("cardDate").textContent = `${now.getFullYear()}/${String(now.getMonth() + 1).padStart(2, "0")}/${String(now.getDate()).padStart(2, "0")}`;
+
+        const shopName = el("shopNameInput").value.trim() || DEFAULT_SHOP;
+        const contactAcc = el("contactAccountInput").value.trim() || DEFAULT_CONTACT;
+        safeStorage.set("gk_shop_v5", shopName);
+        safeStorage.set("gk_contact_v5", contactAcc);
+        el("cardShopName").textContent = shopName;
+        el("cardContactAccount").textContent = contactAcc;
+
+        const isCustom = el("customModeToggle").checked;
+        let brandText = "", modelText = "", specText = "", colorLabel = "", colorHex = "#6B242B";
+
+        if (isCustom) {
+          brandText = el("customBrandInput").value.trim() || "BRAND";
+          modelText = el("customModelInput").value.trim() || "Model";
+          specText = el("customSpecInput").value.trim() || "256G";
+          colorLabel = el("customColorInput").value.trim() || "標準色";
+          colorHex = "#f59e0b";
+        } else {
+          brandText = el("brandSelect").value || "Apple";
+          modelText = el("modelSelect").value || "iPhone 18 Pro Max";
+          const entry = PHONE_CATALOG[brandText]?.[modelText];
+          const sIdx = parseInt(el("specSelect").value || "0", 10);
+          const cIdx = parseInt(el("colorSelect").value || "0", 10);
+          const sObj = entry?.specs?.[sIdx] || { spec: "256G" };
+          const cObj = entry?.colors?.[cIdx] || { zh: "經典黑", en: "Black", vi: "Đen", hex: "#22252A" };
+          specText = sObj.spec;
+          colorLabel = `${cObj.zh} / ${cObj.en} / ${cObj.vi}`;
+          colorHex = cObj.hex;
+        }
+
+        el("cardBrand").textContent = brandText;
+        el("cardModel").textContent = modelText;
+        el("cardSpec").textContent = specText;
+        el("cardColorText").textContent = colorLabel;
+        el("cardColorDot").style.backgroundColor = colorHex;
+
+        // Condition & Delivery
+        const condSel = el("conditionSelect");
+        el("cardConditionText").innerHTML = `<span>✅</span><span>${condSel.options[condSel.selectedIndex].text}</span>`;
+        const delSel = el("deliverySelect");
+        el("cardDeliveryText").textContent = delSel.options[delSel.selectedIndex].text;
+
+        // Prices
+        const basePrice = Math.max(0, parseFloat(el("basePriceInput").value) || 0);
+        const msrpPrice = Math.max(0, parseFloat(el("msrpPriceInput").value) || 0);
+        const downPayment = Math.max(0, parseFloat(el("downPaymentInput").value) || 0);
+        const diff = Math.max(0, msrpPrice - basePrice);
+
+        el("discountBadgeAdmin").textContent = diff > 0 ? `比原廠現省 $${diff.toLocaleString()}` : "原廠同步價";
+
+        const showBase = el("showBasePriceToggle").checked;
+        const showMsrp = el("showMsrpToggle").checked;
+        el("cardBasePriceBox").classList.toggle("hidden", !showBase);
+        el("cardBasePriceVal").textContent = fmt(basePrice);
+
+        el("cardMsrpBox").classList.toggle("hidden", !showMsrp || msrpPrice <= 0);
+        el("cardMsrpVal").textContent = fmt(msrpPrice);
+        el("cardSaveTag").textContent = diff > 0 ? `現省 Save ${fmt(diff)}` : "原廠建議價";
+        el("cardSaveTag").classList.toggle("hidden", diff <= 0);
+        el("cardPriceCompareRow").classList.toggle("hidden", !showBase && (!showMsrp || msrpPrice <= 0));
+
+        // Installments (2~7)
+        const rates = getRates();
+        const featuredTerm = parseInt(el("featuredTermSelect").value || "6", 10);
+        const featuredMonthly = calcMonthly(basePrice, downPayment, featuredTerm, rates[featuredTerm]);
+
+        el("cardDownPayment").textContent = fmt(downPayment);
+        el("cardFeaturedTermLabel").textContent = `${featuredTerm}期月付`;
+        el("cardFeaturedMonthly").textContent = fmt(featuredMonthly);
+
+        const showGrid = el("showCompareGridToggle").checked;
+        el("cardCompareSection").classList.toggle("hidden", !showGrid);
+
+        const grid = el("cardCompareGrid");
+        grid.innerHTML = "";
+        const checkedTerms = Array.from(document.querySelectorAll(".term-cb:checked")).map(cb => parseInt(cb.value, 10));
+        checkedTerms.forEach(t => {
+          const mPay = calcMonthly(basePrice, downPayment, t, rates[t]);
+          const isFeat = t === featuredTerm;
+          const cell = document.createElement("div");
+          cell.className = isFeat
+            ? "p-2.5 rounded-xl bg-amber-500/25 border border-amber-400 text-center"
+            : "p-2.5 rounded-xl bg-white/5 border border-white/10 text-center";
+          cell.innerHTML = `
+            <div class="text-[10px] font-bold ${isFeat ? "text-amber-300" : "text-slate-300"}">${t}期 / ${t}M / ${t} kỳ</div>
+            <div class="text-sm font-black ${isFeat ? "text-amber-300" : "text-white"} mt-0.5">${fmt(mPay)}</div>
+          `;
+          grid.appendChild(cell);
+        });
+
+        // Freebies
+        const activeFreebies = freebies.filter(f => f.checked);
+        const totalFreebieVal = activeFreebies.reduce((acc, f) => acc + (Number(f.value) || 0), 0);
+        el("freebieTotalBadge").textContent = `總價值 ${fmt(totalFreebieVal)}`;
+        el("cardFreebieTotal").textContent = `總價值 Value ${fmt(totalFreebieVal)}`;
+
+        const ul = el("cardFreebiesList");
+        ul.innerHTML = "";
+        if (!activeFreebies.length) {
+          ul.innerHTML = `<li class="text-slate-400 italic">無加購贈品</li>`;
+        } else {
+          activeFreebies.forEach(f => {
+            const li = document.createElement("li");
+            li.className = "flex items-center justify-between gap-2";
+            li.innerHTML = `
+              <span>✦ ${f.zh} <span class="text-slate-400 text-[10px]">(${f.en} / ${f.vi})</span></span>
+              <span class="text-amber-300 font-bold shrink-0">贈送 Free</span>
+            `;
+            ul.appendChild(li);
+          });
+        }
+
+        const ind = el("syncIndicator");
+        ind.textContent = "● 已即時同步";
+      } catch (err) {
+        console.error("Update error:", err);
+      }
+    }
+
+    function buildTrilingualText() {
+      const shopName = el("cardShopName").textContent;
+      const brand = el("cardBrand").textContent;
+      const model = el("cardModel").textContent;
+      const spec = el("cardSpec").textContent;
+      const color = el("cardColorText").textContent;
+      const basePrice = Math.max(0, parseFloat(el("basePriceInput").value) || 0);
+      const msrpPrice = Math.max(0, parseFloat(el("msrpPriceInput").value) || 0);
+      const downPayment = Math.max(0, parseFloat(el("downPaymentInput").value) || 0);
+      const diff = Math.max(0, msrpPrice - basePrice);
+      const rates = getRates();
+      const checkedTerms = Array.from(document.querySelectorAll(".term-cb:checked")).map(cb => parseInt(cb.value, 10));
+      const activeFreebies = freebies.filter(f => f.checked);
+      const totalVal = activeFreebies.reduce((s, f) => s + (Number(f.value) || 0), 0);
+      const contact = el("cardContactAccount").textContent;
+
+      let lines = [
+        `📱【${shopName}】專屬報價單 / QUOTE / BÁO GIÁ`,
+        `━━━━━━━━━━━━━━━━━━`,
+        `🔹 機型 Model：${brand} ${model} (${spec})`,
+        `🎨 顏色 Color：${color}`,
+        `✅ 機況 Status：${el("conditionSelect").options[el("conditionSelect").selectedIndex].text}`,
+      ];
+
+      if (el("showMsrpToggle").checked && msrpPrice > 0) {
+        lines.push(`🏷️ 原廠建議價 MSRP：$${msrpPrice.toLocaleString()}${diff > 0 ? `（現省 Save $${diff.toLocaleString()}）` : ""}`);
+      }
+      if (el("showBasePriceToggle").checked) {
+        lines.push(`💵 空機出售價 Cash：$${basePrice.toLocaleString()}`);
+      }
+
+      lines.push(`━━━━━━━━━━━━━━━━━━`);
+      lines.push(`💰 頭期款 Down / Trả trước：$${downPayment.toLocaleString()}`);
+      checkedTerms.forEach(t => {
+        const mPay = calcMonthly(basePrice, downPayment, t, rates[t]);
+        lines.push(`   ▸ ${t}期 (${t}M / ${t} kỳ)：$${mPay.toLocaleString()} / 月`);
+      });
+
+      if (activeFreebies.length) {
+        lines.push(`━━━━━━━━━━━━━━━━━━`);
+        lines.push(`🎁 購機贈品 Free Gifts (總價值 $${totalVal.toLocaleString()})：`);
+        activeFreebies.forEach(f => {
+          lines.push(`   ✦ ${f.zh} (${f.en} / ${f.vi})`);
+        });
+      }
+
+      lines.push(`━━━━━━━━━━━━━━━━━━`);
+      lines.push(`🚚 ${el("deliverySelect").options[el("deliverySelect").selectedIndex].text}`);
+      lines.push(`📩 立即私訊聯繫：${contact}`);
+      return lines.join("\n");
+    }
+
+    // Event Listeners
+    document.addEventListener("DOMContentLoaded", () => {
+      initRatesAndContact();
+      populateBrands();
+      renderFreebiesAdmin();
+      updateQuote();
+
+      el("quickSearchInput").addEventListener("input", (e) => populateBrands(e.target.value));
+      el("brandSelect").addEventListener("change", () => populateModels(el("quickSearchInput").value));
+      el("modelSelect").addEventListener("change", populateSpecsAndColors);
+      el("specSelect").addEventListener("change", applySelectedSpecPrice);
+      el("colorSelect").addEventListener("change", updateQuote);
+
+      el("customModeToggle").addEventListener("change", (e) => {
+        el("catalogModeBox").classList.toggle("hidden", e.target.checked);
+        el("customModeBox").classList.toggle("hidden", !e.target.checked);
+        updateQuote();
+      });
+
+      ["customBrandInput", "customModelInput", "customSpecInput", "customColorInput",
+       "conditionSelect", "deliverySelect", "basePriceInput", "msrpPriceInput",
+       "downPaymentInput", "showBasePriceToggle", "showMsrpToggle", "showCompareGridToggle",
+       "featuredTermSelect", "shopNameInput", "contactAccountInput"
+      ].forEach(id => {
+        el(id).addEventListener("input", updateQuote);
+        el(id).addEventListener("change", updateQuote);
+      });
+
+      document.querySelectorAll(".rate-input, .term-cb").forEach(inp => {
+        inp.addEventListener("input", updateQuote);
+        inp.addEventListener("change", updateQuote);
+      });
+
+      el("selectAllTermsBtn").addEventListener("click", () => {
+        document.querySelectorAll(".term-cb").forEach(cb => cb.checked = true);
+        updateQuote();
+      });
+
+      el("resetDefaultsBtn").addEventListener("click", () => {
+        [2, 3, 4, 5, 6, 7].forEach(t => el("rate" + t).value = DEFAULT_RATES[t]);
+        el("contactAccountInput").value = DEFAULT_CONTACT;
+        el("shopNameInput").value = DEFAULT_SHOP;
+        updateQuote();
+      });
+
+      el("freebiesList").addEventListener("change", (e) => {
+        if (e.target.classList.contains("freebie-cb")) {
+          const idx = parseInt(e.target.dataset.idx, 10);
+          freebies[idx].checked = e.target.checked;
+          renderFreebiesAdmin();
+          updateQuote();
+        }
+      });
+
+      el("freebiesList").addEventListener("click", (e) => {
+        if (e.target.classList.contains("del-freebie")) {
+          const idx = parseInt(e.target.dataset.del, 10);
+          freebies.splice(idx, 1);
+          renderFreebiesAdmin();
+          updateQuote();
+        }
+      });
+
+      el("addFreebieBtn").addEventListener("click", () => {
+        const zh = el("newFreebieZh").value.trim();
+        if (!zh) return;
+        const en = el("newFreebieEn").value.trim() || zh;
+        const vi = el("newFreebieVi").value.trim() || zh;
+        const val = parseInt(el("newFreebieVal").value || "490", 10);
+        freebies.push({ zh, en, vi, value: val, checked: true });
+        el("newFreebieZh").value = "";
+        el("newFreebieEn").value = "";
+        el("newFreebieVi").value = "";
+        renderFreebiesAdmin();
+        updateQuote();
+      });
+
+      el("syncScrollBtn").addEventListener("click", () => {
+        updateQuote();
+        el("previewSection").scrollIntoView({ behavior: "smooth" });
+      });
+
+      el("downloadPngBtn").addEventListener("click", async () => {
+        updateQuote();
+        const card = el("quoteCardCapture");
+        const canvas = await html2canvas(card, { scale: 3, useCORS: true, backgroundColor: "#0f172a" });
+        const link = document.createElement("a");
+        const safeModel = el("cardModel").textContent.replace(/[^a-zA-Z0-9\u4e00-\u9fa5_-]/g, "_");
+        link.download = `報價單_${safeModel}.png`;
+        link.href = canvas.toDataURL("image/png");
+        link.click();
+      });
+
+      el("copyTextBtn").addEventListener("click", async () => {
+        updateQuote();
+        const txt = buildTrilingualText();
+        let copied = false;
+        try {
+          if (navigator.clipboard && navigator.clipboard.writeText) {
+            await navigator.clipboard.writeText(txt);
+            copied = true;
+          }
+        } catch (err) {}
+        if (!copied) {
+          const ta = document.createElement("textarea");
+          ta.value = txt;
+          ta.style.position = "fixed";
+          ta.style.opacity = "0";
+          document.body.appendChild(ta);
+          ta.focus();
+          ta.select();
+          try { copied = document.execCommand("copy"); } catch (e) {}
+          document.body.removeChild(ta);
+        }
+        const btn = el("copyTextBtn");
+        const orig = btn.innerHTML;
+        btn.innerHTML = copied
+          ? "<span>✅</span><span>已複製三語報價！</span>"
+          : "<span>⚠️</span><span>請手動選取複製</span>";
+        setTimeout(() => btn.innerHTML = orig, 2000);
+      });
+    });
+  </script>
+</body>
+</html>
